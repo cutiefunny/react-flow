@@ -1,3 +1,5 @@
+// src/store.jsx
+
 import { create } from 'zustand';
 import {
   addEdge,
@@ -8,9 +10,8 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from './firebase';
 import { createNodeData, createFormElement } from './nodeFactory';
 import * as backendService from './backendService';
-import * as firebaseApi from './firebaseApi'; // 💡 [추가] firebaseApi 직접 임포트
+// 💡 [수정] firebaseApi 직접 임포트 제거
 
-// 💡 [수정] llm, toast를 포함한 모든 노드 색상 정의
 const defaultColors = {
   message: '#f39c12',
   form: '#9b59b6',
@@ -27,7 +28,6 @@ const defaultColors = {
   scenario: '#7f8c8d',
 };
 
-// 💡 [수정] llm, toast를 포함한 모든 노드 텍스트 색상 정의
 const defaultTextColors = {
   message: '#ffffff',
   form: '#ffffff',
@@ -44,10 +44,8 @@ const defaultTextColors = {
   scenario: '#ffffff',
 };
 
-// 💡 [추가] Admin 페이지와 Flow 페이지에서 공유할 노드 타입 마스터 리스트
 export const ALL_NODE_TYPES = Object.keys(defaultColors);
 
-// 💡 [추가] 기본적으로 표시할 노드 타입 리스트
 const defaultVisibleNodeTypes = [
   'message',
   'form',
@@ -60,8 +58,6 @@ const defaultVisibleNodeTypes = [
   'link',
   'iframe',
   'scenario',
-  // 'llm', // 기본 숨김
-  // 'toast', // 기본 숨김
 ];
 
 
@@ -76,7 +72,6 @@ const useStore = create((set, get) => ({
   slots: {},
   selectedRow: null,
   
-  // 💡 [추가] 노드 표시 여부 상태
   visibleNodeTypes: defaultVisibleNodeTypes,
 
   setAnchorNodeId: (nodeId) => {
@@ -98,14 +93,13 @@ const useStore = create((set, get) => ({
 
   setSlots: (newSlots) => set({ slots: newSlots }),
 
-  // 💡 [수정] fetchNodeColors가 모든 노드 타입을 순회하도록 수정
+  // [TODO] 색상 설정도 backendService를 통해 추상화할 수 있으나, 현재는 Firebase에 고정되어 있음 (유지)
   fetchNodeColors: async () => {
     const docRef = doc(db, "settings", "nodeColors");
     try {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const dbColors = docSnap.data();
-        // 모든 노드 타입에 대해 기본값 || DB값 적용
         const mergedColors = ALL_NODE_TYPES.reduce((acc, type) => {
           acc[type] = dbColors[type] || defaultColors[type];
           return acc;
@@ -120,14 +114,12 @@ const useStore = create((set, get) => ({
     }
   },
 
-  // 💡 [수정] fetchNodeTextColors가 모든 노드 타입을 순회하도록 수정
   fetchNodeTextColors: async () => {
     const docRef = doc(db, "settings", "nodeTextColors");
     try {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const dbTextColors = docSnap.data();
-        // 모든 노드 타입에 대해 기본값 || DB값 적용
         const mergedTextColors = ALL_NODE_TYPES.reduce((acc, type) => {
           acc[type] = dbTextColors[type] || defaultTextColors[type];
           return acc;
@@ -142,24 +134,28 @@ const useStore = create((set, get) => ({
     }
   },
 
-  // 💡 [추가] 노드 표시 여부 fetch/save 함수
-  fetchNodeVisibility: async () => {
+  // 💡 [수정] backend 인자를 받아 backendService 사용
+  fetchNodeVisibility: async (backend) => {
     try {
-      const settings = await firebaseApi.fetchNodeVisibility();
+      // backend가 지정되지 않았을 경우 기본값 firebase 사용 (방어 코드)
+      const currentBackend = backend || 'firebase';
+      const settings = await backendService.fetchNodeVisibility(currentBackend);
+      
       if (settings && Array.isArray(settings.visibleNodeTypes)) {
         set({ visibleNodeTypes: settings.visibleNodeTypes });
       } else {
-        // Firestore에 데이터가 없으면 기본값으로 저장
-        await firebaseApi.saveNodeVisibility(defaultVisibleNodeTypes);
+        // 데이터가 없으면 기본값 저장 (해당 백엔드에)
+        await backendService.saveNodeVisibility(currentBackend, defaultVisibleNodeTypes);
         set({ visibleNodeTypes: defaultVisibleNodeTypes });
       }
     } catch (error) {
       console.error("Failed to fetch node visibility:", error);
-      set({ visibleNodeTypes: defaultVisibleNodeTypes }); // 에러 시 기본값
+      set({ visibleNodeTypes: defaultVisibleNodeTypes }); 
     }
   },
 
-  setNodeVisibility: async (nodeType, isVisible) => {
+  // 💡 [수정] backend 인자를 받아 backendService 사용
+  setNodeVisibility: async (backend, nodeType, isVisible) => {
     const currentVisible = get().visibleNodeTypes;
     const newVisibleSet = new Set(currentVisible);
     if (isVisible) {
@@ -172,13 +168,12 @@ const useStore = create((set, get) => ({
     set({ visibleNodeTypes: newVisibleArray });
     
     try {
-      await firebaseApi.saveNodeVisibility(newVisibleArray);
+      const currentBackend = backend || 'firebase';
+      await backendService.saveNodeVisibility(currentBackend, newVisibleArray);
     } catch (error) {
       console.error("Failed to save node visibility:", error);
-      // TODO: 에러 롤백 처리 (선택 사항)
     }
   },
-  // 💡 [추가 끝]
 
   setNodeColor: async (type, color) => {
     const newColors = { ...get().nodeColors, [type]: color };
@@ -332,7 +327,6 @@ const useStore = create((set, get) => ({
     set({ nodes: [...get().nodes, newNode] });
   },
 
-  // --- 👇 Functions from previous development ---
   addReply: (nodeId) => {
     set((state) => ({
       nodes: state.nodes.map((node) => {

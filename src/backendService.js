@@ -2,7 +2,7 @@
 
 import * as firebaseApi from './firebaseApi';
 import * as fastApi from './fastApi';
-import { interpolateMessage, getNestedValue } from './simulatorUtils';
+import { interpolateMessage } from './simulatorUtils';
 import useStore from './store';
 
 const services = {
@@ -19,36 +19,32 @@ const getService = (backend) => {
 };
 
 export const fetchScenarios = (backend, args) => getService(backend).fetchScenarios(args);
-// <<< [수정] description 전달 ---
-export const createScenario = (backend, args) => getService(backend).createScenario(args); // args에 description 포함되어 전달됨
-export const renameScenario = (backend, args) => getService(backend).renameScenario(args); // args에 description 포함되어 전달됨
-// --- [수정 끝] >>>
+export const createScenario = (backend, args) => getService(backend).createScenario(args);
+export const renameScenario = (backend, args) => getService(backend).renameScenario(args);
 export const deleteScenario = (backend, args) => getService(backend).deleteScenario(args);
 export const fetchScenarioData = (backend, args) => getService(backend).fetchScenarioData(args);
 export const saveScenarioData = (backend, args) => getService(backend).saveScenarioData(args);
-// <<< [수정] clone 시 description도 복사되도록 가정 (백엔드 로직에 따라 달라질 수 있음) ---
-export const cloneScenario = (backend, args) => getService(backend).cloneScenario(args); // args에 description 정보 필요시 추가 전달
-// --- [수정 끝] >>>
-
-// --- 💡 [수정] lastUsedAt 업데이트 함수 추상화 ---
+export const cloneScenario = (backend, args) => getService(backend).cloneScenario(args);
 export const updateScenarioLastUsed = (backend, args) => getService(backend).updateScenarioLastUsed(args);
-// --- 💡 [수정 끝] ---
 
-
-// --- 💡 [수정] API 템플릿 함수들 추상화 ---
+// API Templates
 export const fetchApiTemplates = (backend, args) => getService(backend).fetchApiTemplates(args);
 export const saveApiTemplate = (backend, args) => getService(backend).saveApiTemplate(args);
 export const deleteApiTemplate = (backend, args) => getService(backend).deleteApiTemplate(args);
 
-// --- 💡 [수정] Form 템플릿 함수들 추상화 ---
+// Form Templates
 export const fetchFormTemplates = (backend, args) => getService(backend).fetchFormTemplates(args);
 export const saveFormTemplate = (backend, args) => getService(backend).saveFormTemplate(args);
 export const deleteFormTemplate = (backend, args) => getService(backend).deleteFormTemplate(args);
-// --- 💡 [수정 끝] ---
+
+// --- 💡 [추가] Node Visibility Settings ---
+export const fetchNodeVisibility = (backend, args) => getService(backend).fetchNodeVisibility(args);
+export const saveNodeVisibility = (backend, args) => getService(backend).saveNodeVisibility(args);
+// --- 💡 [추가 끝] ---
 
 
 export const testApiCall = async (apiCall) => {
-  // ... (기존 API 테스트 로직) ...
+  // ... (기존 API 테스트 로직 유지) ...
   const { slots } = useStore.getState();
   const interpolatedUrl = interpolateMessage(apiCall.url, slots);
   const interpolatedHeaders = JSON.parse(interpolateMessage(apiCall.headers || '{}', slots));

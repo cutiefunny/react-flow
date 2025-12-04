@@ -7,13 +7,12 @@ import Login from './Login';
 import HelpModal from './HelpModal';
 import ScenarioModal from './ScenarioModal';
 import ApiDocs from './ApiDocs';
-import Admin from './Admin'; // 💡 [추가] Admin 컴포넌트 임포트
+import Admin from './Admin';
 import useStore from './store';
 import * as backendService from './backendService';
 import { AlertProvider } from './context/AlertProvider';
 import './App.css';
 
-// 💡 [추가] 관리자 이메일 목록
 const adminUsers = ['cutiefunny@gmail.com'];
 
 function App() {
@@ -29,9 +28,8 @@ function App() {
 
   const fetchNodeColors = useStore((state) => state.fetchNodeColors);
   const fetchNodeTextColors = useStore((state) => state.fetchNodeTextColors);
-  const fetchNodeVisibility = useStore((state) => state.fetchNodeVisibility); // 💡 [추가]
+  const fetchNodeVisibility = useStore((state) => state.fetchNodeVisibility);
 
-  // 💡 [추가] 사용자가 관리자인지 확인
   const isAdmin = user && adminUsers.includes(user.email);
 
   useEffect(() => {
@@ -56,13 +54,13 @@ function App() {
       setLoading(false);
     });
 
-    // 💡 [수정] 모든 설정 fetch
     fetchNodeColors();
     fetchNodeTextColors();
-    fetchNodeVisibility(); // 💡 [추가]
+    // 💡 [수정] backend 상태에 따라 fetch
+    fetchNodeVisibility(backend);
 
     return () => unsubscribe();
-  }, [fetchNodeColors, fetchNodeTextColors, fetchNodeVisibility]); // 💡 [추가]
+  }, [fetchNodeColors, fetchNodeTextColors, fetchNodeVisibility, backend]); // backend 의존성 추가
 
   const handleLogin = async () => {
     try {
@@ -187,7 +185,6 @@ function App() {
             <button onClick={() => handleViewChange('api')} className={view === 'api' ? 'active' : ''}>
               API Docs
             </button>
-            {/* 💡 [추가] Admin 탭 (관리자 전용) */}
             {isAdmin && (
               <button onClick={() => handleViewChange('admin')} className={view === 'admin' ? 'active' : ''}>
                 Admin
@@ -240,9 +237,9 @@ function App() {
               <ApiDocs />
           </div>
           
-          {/* 💡 [추가] Admin 뷰 컨테이너 */}
           <div className={`view-container ${view !== 'admin' ? 'hidden' : ''}`}>
-              {isAdmin ? <Admin /> : <div style={{padding: '20px'}}>Access Denied.</div>}
+              {/* 💡 [수정] backend prop 전달 */}
+              {isAdmin ? <Admin backend={backend} /> : <div style={{padding: '20px'}}>Access Denied.</div>}
           </div>
         </main>
         <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
