@@ -21,6 +21,10 @@ const getService = (backend) => {
 export const fetchScenarios = (backend, args) => getService(backend).fetchScenarios(args);
 export const createScenario = (backend, args) => getService(backend).createScenario(args);
 export const renameScenario = (backend, args) => getService(backend).renameScenario(args);
+
+// 25.11.26 - download 로직 추가 (KWJ)
+export const downloadScenario = (backend, args) => getService(backend).downloadScenario(args);
+
 export const deleteScenario = (backend, args) => getService(backend).deleteScenario(args);
 export const fetchScenarioData = (backend, args) => getService(backend).fetchScenarioData(args);
 export const saveScenarioData = (backend, args) => getService(backend).saveScenarioData(args);
