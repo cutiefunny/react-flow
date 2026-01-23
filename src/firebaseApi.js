@@ -149,6 +149,28 @@ export const updateScenarioLastUsed = async ({ scenarioId }) => {
   return null;
 };
 
+// KWJ - download 추가
+export const downloadScenario = async ({ scenarioId }) => {
+  const docRef = doc(db, 'scenarios', scenarioId);
+  const data = await getDoc(docRef)
+
+  const content = data.data()
+  const filename = content.name
+
+  const jsonString = JSON.stringify(content, null, 2);
+  const blob = new Blob([jsonString], { type: "application/json" });
+  const url = window.URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${filename}.json`;
+
+  document.body.appendChild(link);
+  link.click();
+
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
 
 // ... (API/Form 템플릿 함수들) ...
 export const fetchApiTemplates = async () => {
