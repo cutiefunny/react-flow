@@ -6,11 +6,8 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
 } from 'reactflow';
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from './firebase';
 import { createNodeData, createFormElement } from './nodeFactory';
 import * as backendService from './backendService';
-// 💡 [수정] firebaseApi 직접 임포트 제거
 
 const defaultColors = {
   message: '#f39c12',
@@ -93,52 +90,53 @@ const useStore = create((set, get) => ({
 
   setSlots: (newSlots) => set({ slots: newSlots }),
 
-  // [TODO] 색상 설정도 backendService를 통해 추상화할 수 있으나, 현재는 Firebase에 고정되어 있음 (유지)
-  fetchNodeColors: async () => {
-    const docRef = doc(db, "settings", "nodeColors");
+  fetchNodeColors: async (backend) => {
     try {
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const dbColors = docSnap.data();
+      const currentBackend = backend || 'fastapi';
+      const colors = await backendService.fetchNodeColors(currentBackend);
+      
+      if (colors) {
         const mergedColors = ALL_NODE_TYPES.reduce((acc, type) => {
-          acc[type] = dbColors[type] || defaultColors[type];
+          acc[type] = colors[type] || defaultColors[type];
           return acc;
         }, {});
         set({ nodeColors: mergedColors });
       } else {
-        await setDoc(docRef, defaultColors);
+        await backendService.saveNodeColors(currentBackend, defaultColors);
         set({ nodeColors: defaultColors });
       }
     } catch (error) {
       console.error("Failed to fetch node colors from DB", error);
+      set({ nodeColors: defaultColors });
     }
   },
 
-  fetchNodeTextColors: async () => {
-    const docRef = doc(db, "settings", "nodeTextColors");
+  fetchNodeTextColors: async (backend) => {
     try {
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const dbTextColors = docSnap.data();
+      const currentBackend = backend || 'fastapi';
+      const textColors = await backendService.fetchNodeTextColors(currentBackend);
+      
+      if (textColors) {
         const mergedTextColors = ALL_NODE_TYPES.reduce((acc, type) => {
-          acc[type] = dbTextColors[type] || defaultTextColors[type];
+          acc[type] = textColors[type] || defaultTextColors[type];
           return acc;
         }, {});
         set({ nodeTextColors: mergedTextColors });
       } else {
-        await setDoc(docRef, defaultTextColors);
+        await backendService.saveNodeTextColors(currentBackend, defaultTextColors);
         set({ nodeTextColors: defaultTextColors });
       }
     } catch (error) {
       console.error("Failed to fetch node text colors from DB", error);
+      set({ nodeTextColors: defaultTextColors });
     }
   },
 
   // 💡 [수정] backend 인자를 받아 backendService 사용
   fetchNodeVisibility: async (backend) => {
     try {
-      // backend가 지정되지 않았을 경우 기본값 firebase 사용 (방어 코드)
-      const currentBackend = backend || 'firebase';
+      // backend가 지정되지 않았을 경우 기본값 fastapi 사용 (방어 코드)
+      const currentBackend = backend || 'fastapi';
       const settings = await backendService.fetchNodeVisibility(currentBackend);
       
       if (settings && Array.isArray(settings.visibleNodeTypes)) {
@@ -168,30 +166,30 @@ const useStore = create((set, get) => ({
     set({ visibleNodeTypes: newVisibleArray });
     
     try {
-      const currentBackend = backend || 'firebase';
+      const currentBackend = backend || 'fastapi';
       await backendService.saveNodeVisibility(currentBackend, newVisibleArray);
     } catch (error) {
       console.error("Failed to save node visibility:", error);
     }
   },
 
-  setNodeColor: async (type, color) => {
+  setNodeColor: async (backend, type, color) => {
     const newColors = { ...get().nodeColors, [type]: color };
     set({ nodeColors: newColors });
     try {
-      const docRef = doc(db, "settings", "nodeColors");
-      await setDoc(docRef, newColors);
+      const currentBackend = backend || 'fastapi';
+      await backendService.saveNodeColors(currentBackend, newColors);
     } catch (error) {
       console.error("Failed to save node colors to DB", error);
     }
   },
 
-  setNodeTextColor: async (type, color) => {
+  setNodeTextColor: async (backend, type, color) => {
     const newTextColors = { ...get().nodeTextColors, [type]: color };
     set({ nodeTextColors: newTextColors });
     try {
-      const docRef = doc(db, "settings", "nodeTextColors");
-      await setDoc(docRef, newTextColors);
+      const currentBackend = backend || 'fastapi';
+      await backendService.saveNodeTextColors(currentBackend, newTextColors);
     } catch (error) {
       console.error("Failed to save node text colors to DB", error);
     }

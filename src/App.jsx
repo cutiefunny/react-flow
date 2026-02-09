@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { auth, onAuthStateChanged, signOut, signInWithPopup, provider } from './firebase';
 import Flow from './Flow';
 import ScenarioList from './ScenarioList';
 import Board from './Board';
@@ -17,14 +16,14 @@ const adminUsers = ['cutiefunny@gmail.com'];
 
 function App() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectedScenario, setSelectedScenario] = useState(null);
   const [view, setView] = useState('list');
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [scenarios, setScenarios] = useState([]);
   const [isScenarioModalOpen, setIsScenarioModalOpen] = useState(false);
   const [editingScenario, setEditingScenario] = useState(null);
-  const [backend, setBackend] = useState('firebase');
+  const [backend, setBackend] = useState('fastapi');
 
   const fetchNodeColors = useStore((state) => state.fetchNodeColors);
   const fetchNodeTextColors = useStore((state) => state.fetchNodeTextColors);
@@ -33,50 +32,31 @@ function App() {
   const isAdmin = user && adminUsers.includes(user.email);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-       if (currentUser) {
-        const allowedEmails = ['cutiefunny@gmail.com', 'hyh8414@gmail.com'];
-        const allowedDomains = ['cyberlogitec.com', 'wisenut.co.kr'];
-        const userEmail = currentUser.email;
-        const userDomain = userEmail.split('@')[1];
-        const isAuthorized = allowedEmails.includes(userEmail) || allowedDomains.includes(userDomain);
+    // Initialize with default user (development mode)
+    const defaultUser = {
+      email: 'dev@example.com',
+      displayName: 'Developer',
+      photoURL: 'https://via.placeholder.com/40'
+    };
+    setUser(defaultUser);
 
-        if (isAuthorized) {
-          setUser(currentUser);
-        } else {
-          signOut(auth);
-          alert("Access denied. You don't have permission to access this account.");
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
-
-    fetchNodeColors();
-    fetchNodeTextColors();
-    // 💡 [수정] backend 상태에 따라 fetch
+    fetchNodeColors(backend);
+    fetchNodeTextColors(backend);
     fetchNodeVisibility(backend);
-
-    return () => unsubscribe();
-  }, [fetchNodeColors, fetchNodeTextColors, fetchNodeVisibility, backend]); // backend 의존성 추가
+  }, [fetchNodeColors, fetchNodeTextColors, fetchNodeVisibility, backend]);
 
   const handleLogin = async () => {
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Error signing in with Google: ", error);
-      alert("Login failed. Please try again.");
-    }
+    // Development mode - auto login
+    const defaultUser = {
+      email: 'dev@example.com',
+      displayName: 'Developer',
+      photoURL: 'https://via.placeholder.com/40'
+    };
+    setUser(defaultUser);
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Error signing out: ", error);
-    }
+    setUser(null);
   };
 
   const handleScenarioSelect = async (scenario) => {
@@ -192,14 +172,6 @@ function App() {
             )}
           </nav>
           <div className="user-profile">
-            <div className="backend-switch">
-              <span>Firebase</span>
-              <label className="switch">
-                <input type="checkbox" checked={backend === 'fastapi'} onChange={() => setBackend(prev => prev === 'firebase' ? 'fastapi' : 'firebase')} />
-                <span className="slider round"></span>
-              </label>
-              <span>FastAPI</span>
-            </div>
             {user ? (
               <>
                 <img src={user.photoURL} alt={user.displayName} className="user-avatar" />

@@ -1,0 +1,56 @@
+# =============================================================================
+# .copilotignore - React Flow 프로젝트용 Copilot 무시 패턴
+# =============================================================================
+# 이 파일은 GitHub Copilot이 분석할 때 무시할 파일/폴더를 정의합니다.
+# 토큰 사용량 절감 및 성능 최적화를 목표로 합니다.
+# =============================================================================
+
+# --- 1. 빌드 및 의존성 (항상 무시) ---
+node_modules/
+.venv/
+venv/
+env/
+build/
+dist/
+out/
+
+# --- 2. 패키지 매니저 락 파일 (대용량) ---
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# --- 3. 환경 변수 파일 ---
+.env
+.env.local
+.env.*.local
+
+# --- 4. IDE 및 에디터 설정 ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# --- 5. 로그 및 캐시 파일 ---
+*.log
+logs/
+.cache/
+.turbo/
+
+# --- 6. OS 파일 ---
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# --- 7. Git 관련 파일 ---
+.git/
+.gitignore
+.gitattributes
+
+# --- 8. 테스트 및 커버리지 ---
+coverage/
+.nyc_output/
+test-results/
+*.xml

@@ -200,3 +200,33 @@ export const fetchNodeVisibility = async () => {
   }
   return null; // 데이터가 없음
 };
+
+// Node Colors
+export const fetchNodeColors = async () => {
+  const docRef = doc(db, "settings", "nodeColors");
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return docSnap.data();
+  }
+  return null;
+};
+
+export const saveNodeColors = async (colors) => {
+  const docRef = doc(db, "settings", "nodeColors");
+  await setDoc(docRef, colors);
+};
+
+// Node Text Colors
+export const fetchNodeTextColors = async () => {
+  const docRef = doc(db, "settings", "nodeTextColors");
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return docSnap.data();
+  }
+  return null;
+};
+
+export const saveNodeTextColors = async (textColors) => {
+  const docRef = doc(db, "settings", "nodeTextColors");
+  await setDoc(docRef, textColors);
+};

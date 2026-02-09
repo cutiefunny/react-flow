@@ -1,7 +1,4 @@
 import { useState, useEffect } from 'react';
-import { db, storage } from './firebase';
-import { collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import styles from './Board.module.css';
 import useAlert from './hooks/useAlert';
 
@@ -9,6 +6,7 @@ import useAlert from './hooks/useAlert';
 const FileIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
 );
+
 const ImageIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
 );
@@ -23,18 +21,22 @@ function Board({ user }) {
   const [editText, setEditText] = useState('');
   const { showAlert, showConfirm } = useAlert();
 
-  // Fetch posts from Firestore in real-time
+  // Initialize with sample posts (in-memory storage for demo)
   useEffect(() => {
-    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const postsData = [];
-      querySnapshot.forEach((doc) => {
-        postsData.push({ id: doc.id, ...doc.data() });
-      });
-      setPosts(postsData);
-    });
-
-    return () => unsubscribe();
+    const samplePosts = [
+      {
+        id: '1',
+        author: 'John Doe',
+        authorId: 'user1',
+        authorPhotoURL: 'https://via.placeholder.com/40',
+        text: 'Welcome to the Board! This is a shared space for collaboration.',
+        timestamp: new Date(),
+        fileUrl: '',
+        fileName: '',
+        fileType: '',
+      }
+    ];
+    setPosts(samplePosts);
   }, []);
 
   const handleFileChange = (e) => {
@@ -45,7 +47,6 @@ function Board({ user }) {
 
   const handlePostSubmit = async (e) => {
     e.preventDefault();
-    // --- 💡 수정된 부분: 로그인하지 않은 사용자는 제출 불가 ---
     if (!user) {
       showAlert("Please log in to write a post.");
       return;
@@ -62,39 +63,34 @@ function Board({ user }) {
     let fileType = '';
 
     if (fileToUpload) {
-      const storageRef = ref(storage, `uploads/${user.uid}/${Date.now()}_${fileToUpload.name}`);
-      try {
-        const snapshot = await uploadBytes(storageRef, fileToUpload);
-        fileUrl = await getDownloadURL(snapshot.ref);
-        fileName = fileToUpload.name;
-        fileType = fileToUpload.type.startsWith('image/') ? 'image' : 'file';
-      } catch (error) {
-        console.error("Error uploading file: ", error);
-        showAlert("File upload failed!");
-        setIsLoading(false);
-        return;
-      }
+      fileName = fileToUpload.name;
+      fileType = fileToUpload.type.startsWith('image/') ? 'image' : 'file';
+      // In development mode, create a preview URL
+      fileUrl = URL.createObjectURL(fileToUpload);
     }
 
     try {
-      await addDoc(collection(db, 'posts'), {
+      const newPost = {
+        id: Date.now().toString(),
         author: user.displayName,
-        authorId: user.uid,
+        authorId: user.uid || 'dev-user',
         authorPhotoURL: user.photoURL,
         text: newPostText,
-        timestamp: serverTimestamp(),
+        timestamp: new Date(),
         fileUrl,
         fileName,
         fileType,
-      });
+      };
 
+      setPosts([newPost, ...posts]);
       setNewPostText('');
       setFileToUpload(null);
       if(document.getElementById('fileInput')) {
         document.getElementById('fileInput').value = '';
       }
+      showAlert('Post created successfully!');
     } catch (error) {
-      console.error("Error adding document: ", error);
+      console.error("Error adding post: ", error);
       showAlert("Failed to create post.");
     } finally {
       setIsLoading(false);
@@ -102,35 +98,30 @@ function Board({ user }) {
   };
 
   const handleDeletePost = async (post) => {
-    // --- 💡 수정된 부분: 로그인하지 않은 사용자는 삭제 불가 ---
     if (!user) {
       showAlert("Please log in to delete a post.");
       return;
     }
-    if (post.authorId !== user.uid) {
+    if (post.authorId !== (user.uid || 'dev-user')) {
       showAlert("You can only delete your own posts.");
       return;
     }
 
-    const confirmed = await showConfirm("정말로 이 게시물을 삭제하시겠습니까?");
+    const confirmed = await showConfirm("Are you sure you want to delete this post?");
     if (!confirmed) {
       return;
     }
 
     try {
-      if (post.fileUrl) {
-        const fileRef = ref(storage, post.fileUrl);
-        await deleteObject(fileRef);
-      }
-      await deleteDoc(doc(db, 'posts', post.id));
+      setPosts(posts.filter(p => p.id !== post.id));
+      showAlert('Post deleted successfully!');
     } catch (error) {
       console.error("Error deleting post: ", error);
-      showAlert("게시물 삭제에 실패했습니다.");
+      showAlert("Failed to delete post.");
     }
   };
 
   const handleEditClick = (post) => {
-    // --- 💡 수정된 부분: 로그인하지 않은 사용자는 수정 모드 진입 불가 ---
     if (!user) {
         showAlert("Please log in to edit a post.");
         return;
@@ -140,16 +131,16 @@ function Board({ user }) {
   };
 
   const handleUpdatePost = async (postId) => {
-    const postRef = doc(db, 'posts', postId);
     try {
-      await updateDoc(postRef, {
-        text: editText
-      });
+      setPosts(posts.map(p => 
+        p.id === postId ? { ...p, text: editText } : p
+      ));
       setEditingPostId(null);
       setEditText('');
+      showAlert('Post updated successfully!');
     } catch (error) {
       console.error("Error updating post: ", error);
-      showAlert("게시물 수정에 실패했습니다.");
+      showAlert("Failed to update post.");
     }
   };
 
@@ -161,7 +152,6 @@ function Board({ user }) {
 
   return (
     <div className={styles.boardContainer}>
-      {/* --- 💡 수정된 부분: 로그인 상태에 따라 글쓰기 폼 렌더링 --- */}
       {user ? (
         <form className={styles.postForm} onSubmit={handlePostSubmit}>
           <textarea
@@ -205,14 +195,14 @@ function Board({ user }) {
                 <div className={styles.authorInfo}>
                   <span className={styles.authorName}>{post.author || 'Anonymous'}</span>
                   <span className={styles.timestamp}>
-                    {post.timestamp?.toDate().toLocaleString()}
+                    {post.timestamp?.toLocaleString()}
                   </span>
                 </div>
               </div>
               {user && user.uid === post.authorId && (
                 <div className={styles.buttonGroup}>
                    <button onClick={() => handleEditClick(post)} className={styles.editButton}>
-                    수정
+                    Edit
                   </button>
                   <button onClick={() => handleDeletePost(post)} className={styles.deleteButton}>
                     &times;
@@ -229,22 +219,22 @@ function Board({ user }) {
                     onChange={(e) => setEditText(e.target.value)}
                   />
                   <div className={styles.editActions}>
-                    <button onClick={() => handleUpdatePost(post.id)} className={styles.saveButton}>저장</button>
-                    <button onClick={handleCancelEdit} className={styles.cancelButton}>취소</button>
+                    <button onClick={() => handleUpdatePost(post.id)} className={styles.saveButton}>Save</button>
+                    <button onClick={handleCancelEdit} className={styles.cancelButton}>Cancel</button>
                   </div>
                 </div>
               ) : (
                 <>
                   {post.text && <p>{post.text}</p>}
-                  {post.fileType === 'image' && (
+                  {post.fileType === 'image' && post.fileUrl && (
                     <img src={post.fileUrl} alt="Post content" className={styles.postImage} />
                   )}
                   {post.fileType === 'file' && (
                     <div className={styles.postFile}>
                       <FileIcon />
-                      <a href={post.fileUrl} target="_blank" rel="noopener noreferrer" className={styles.fileLink}>
+                      <span className={styles.fileName}>
                         {post.fileName}
-                      </a>
+                      </span>
                     </div>
                   )}
                 </>

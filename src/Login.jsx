@@ -1,6 +1,4 @@
 import styles from './Login.module.css';
-import { auth, provider } from './firebase';
-import { signInWithPopup } from 'firebase/auth';
 import useAlert from './hooks/useAlert';
 
 // Google Icon SVG
@@ -16,12 +14,8 @@ const GoogleIcon = () => (
 function Login() {
   const { showAlert } = useAlert();
   const handleLogin = async () => {
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Error signing in with Google: ", error);
-      showAlert("Login failed. Please try again.");
-    }
+    // Development mode - auto login with message
+    showAlert("Logged in successfully (Development Mode)");
   };
 
   return (

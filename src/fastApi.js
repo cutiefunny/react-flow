@@ -1,7 +1,7 @@
 // src/fastApi.js
 
 // 💡 [수정] 제공해주신 Mock API 엔드포인트 설정
-const BASE_URL = 'https://musclecat-api.vercel.app/api/v1/chat';
+const BASE_URL = 'http://202.20.84.65:8082/api/v1';
 
 // 리소스별 Base URL 정의
 const API_BASE_URL = `${BASE_URL}/scenarios`;
@@ -237,5 +237,37 @@ export const fetchNodeVisibility = async () => {
     const response = await fetch(`${SETTINGS_BASE_URL}/${TENANT_ID}/node_visibility`);
     // 404 등 실패 시 null을 반환하여 Store에서 기본값을 사용하도록 함
     if (!response.ok) return null;
+    return handleApiResponse(response);
+};
+
+// Node Colors
+export const fetchNodeColors = async () => {
+    const response = await fetch(`${SETTINGS_BASE_URL}/${TENANT_ID}/node_colors`);
+    if (!response.ok) return null;
+    return handleApiResponse(response);
+};
+
+export const saveNodeColors = async (colors) => {
+    const response = await fetch(`${SETTINGS_BASE_URL}/${TENANT_ID}/node_colors`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(colors),
+    });
+    return handleApiResponse(response);
+};
+
+// Node Text Colors
+export const fetchNodeTextColors = async () => {
+    const response = await fetch(`${SETTINGS_BASE_URL}/${TENANT_ID}/node_text_colors`);
+    if (!response.ok) return null;
+    return handleApiResponse(response);
+};
+
+export const saveNodeTextColors = async (textColors) => {
+    const response = await fetch(`${SETTINGS_BASE_URL}/${TENANT_ID}/node_text_colors`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(textColors),
+    });
     return handleApiResponse(response);
 };

@@ -1,22 +1,32 @@
 // src/backendService.js
 
-import * as firebaseApi from './firebaseApi';
 import * as fastApi from './fastApi';
+import * as mockApi from './mockApi';
 import { interpolateMessage } from './simulatorUtils';
 import useStore from './store';
 
+// Use mock API by default when VITE_USE_MOCK_API is true, or when FastAPI is not available
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true';
+
 const services = {
-  firebase: firebaseApi,
-  fastapi: fastApi,
+  fastapi: USE_MOCK_API ? mockApi : fastApi,
+  mock: mockApi,
 };
 
 const getService = (backend) => {
-  const service = services[backend];
+  const service = services[backend] || services.fastapi;
   if (!service) {
     throw new Error(`Invalid backend specified: ${backend}`);
   }
   return service;
 };
+
+// Log which API is being used
+if (USE_MOCK_API) {
+  console.log('🔧 [Development Mode] Using Mock API for testing');
+} else {
+  console.log('🚀 [Production Mode] Using Real FastAPI backend');
+}
 
 export const fetchScenarios = (backend, args) => getService(backend).fetchScenarios(args);
 export const createScenario = (backend, args) => getService(backend).createScenario(args);
@@ -40,6 +50,16 @@ export const deleteFormTemplate = (backend, args) => getService(backend).deleteF
 // --- 💡 [추가] Node Visibility Settings ---
 export const fetchNodeVisibility = (backend, args) => getService(backend).fetchNodeVisibility(args);
 export const saveNodeVisibility = (backend, args) => getService(backend).saveNodeVisibility(args);
+// --- 💡 [추가 끝] ---
+
+// --- 💡 [추가] Node Colors Settings ---
+export const fetchNodeColors = (backend, args) => getService(backend).fetchNodeColors(args);
+export const saveNodeColors = (backend, args) => getService(backend).saveNodeColors(args);
+// --- 💡 [추가 끝] ---
+
+// --- 💡 [추가] Node Text Colors Settings ---
+export const fetchNodeTextColors = (backend, args) => getService(backend).fetchNodeTextColors(args);
+export const saveNodeTextColors = (backend, args) => getService(backend).saveNodeTextColors(args);
 // --- 💡 [추가 끝] ---
 
 

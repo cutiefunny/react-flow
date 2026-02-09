@@ -40,7 +40,7 @@ function Admin({ backend }) {
                 <input
                   type="color"
                   value={nodeColors[type]}
-                  onChange={(e) => setNodeColor(type, e.target.value)}
+                  onChange={(e) => setNodeColor(backend, type, e.target.value)}
                   className={styles.colorInput}
                 />
                 <span>{nodeColors[type]}</span>
@@ -51,7 +51,7 @@ function Admin({ backend }) {
                 <input
                   type="color"
                   value={nodeTextColors[type]}
-                  onChange={(e) => setNodeTextColor(type, e.target.value)}
+                  onChange={(e) => setNodeTextColor(backend, type, e.target.value)}
                   className={styles.colorInput}
                 />
                  <span>{nodeTextColors[type]}</span>
