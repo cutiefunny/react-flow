@@ -25,7 +25,7 @@ Mock API는 자동으로 활성화되며, 모든 API 호출이 메모리 기반�
 VITE_USE_MOCK_API=false
 
 # FastAPI 서버 실행 (별도 터미널)
-# python -m uvicorn main:app --reload --port 8082
+# python -m uvicorn main:app --reload --port 8083
 
 # 앱 실행
 npm run dev
@@ -129,7 +129,7 @@ VITE_USE_MOCK_API=false
 ### Step 2: FastAPI 백엔드 시작
 
 ```bash
-python -m uvicorn main:app --reload --port 8082
+python -m uvicorn main:app --reload --port 8083
 ```
 
 ### Step 3: 앱 재시작

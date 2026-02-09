@@ -1,15 +1,17 @@
 // src/fastApi.js
 
-// 💡 [수정] 제공해주신 Mock API 엔드포인트 설정
-const BASE_URL = 'http://202.20.84.65:8082/api/v1';
+import {
+  MOCK_NODE_COLORS,
+  MOCK_NODE_TEXT_COLORS,
+  delay,
+} from './mockData';
+
+const BASE_URL = 'http://202.20.84.65:8083/api/v1';
 
 // 리소스별 Base URL 정의
 const API_BASE_URL = `${BASE_URL}/scenarios`;
 const SETTINGS_BASE_URL = `${BASE_URL}/settings`;
 const TEMPLATE_BASE_URL = `${BASE_URL}/templates`;
-
-const TENANT_ID = '1000';
-const STAGE_ID = 'DEV';
 
 const handleApiResponse = async (response) => {
     if (!response.ok) {
@@ -30,12 +32,14 @@ const handleApiResponse = async (response) => {
 };
 
 export const fetchScenarios = async () => {
-    const response = await fetch(`${API_BASE_URL}/${TENANT_ID}/${STAGE_ID}`);
+    const response = await fetch(`${API_BASE_URL}`);
     const data = await handleApiResponse(response);
     const scenarios = data?.scenarios || (Array.isArray(data) ? data : []);
     
     return scenarios.map(scenario => ({
        ...scenario,
+       name: scenario.name || scenario.title || '',
+       title: scenario.title,
        job: scenario.job || 'Process',
        description: scenario.description || '',
        // Python snake_case -> JS camelCase 매핑
@@ -45,14 +49,13 @@ export const fetchScenarios = async () => {
 };
 
 export const createScenario = async ({ newScenarioName, job, description }) => {
-    const response = await fetch(`${API_BASE_URL}/${TENANT_ID}/${STAGE_ID}`, {
+    const response = await fetch(`${API_BASE_URL}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             name: newScenarioName,
             job: job,
             description: description,
-            category_id: 'DEV_1000_S_1_1_1',
             nodes: [],
             edges: [],
             start_node_id: null
@@ -69,14 +72,13 @@ export const createScenario = async ({ newScenarioName, job, description }) => {
 };
 
 export const cloneScenario = async ({ scenarioToClone, newName }) => {
-  const response = await fetch(`${API_BASE_URL}/${TENANT_ID}/${STAGE_ID}`, {
+  const response = await fetch(`${API_BASE_URL}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       name: newName,
       job: scenarioToClone.job,
       clone_from_id: scenarioToClone.id,
-      category_id: 'DEV_1000_S_1_1_1',
       description: scenarioToClone.description
     }),
   });
@@ -91,7 +93,7 @@ export const cloneScenario = async ({ scenarioToClone, newName }) => {
 };
 
 export const renameScenario = async ({ oldScenario, newName, job, description }) => {
-    const response = await fetch(`${API_BASE_URL}/${TENANT_ID}/${STAGE_ID}/${oldScenario.id}`, {
+    const response = await fetch(`${API_BASE_URL}/${oldScenario.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newName, job: job, description: description }),
@@ -107,7 +109,7 @@ export const renameScenario = async ({ oldScenario, newName, job, description })
 };
 
 export const deleteScenario = async ({ scenarioId }) => {
-    const response = await fetch(`${API_BASE_URL}/${TENANT_ID}/${STAGE_ID}/${scenarioId}`, {
+    const response = await fetch(`${API_BASE_URL}/${scenarioId}`, {
         method: 'DELETE',
     });
     return handleApiResponse(response);
@@ -115,7 +117,7 @@ export const deleteScenario = async ({ scenarioId }) => {
 
 export const fetchScenarioData = async ({ scenarioId }) => {
     if (!scenarioId) return { nodes: [], edges: [], startNodeId: null, description: '' };
-    const response = await fetch(`${API_BASE_URL}/${TENANT_ID}/${STAGE_ID}/${scenarioId}`);
+    const response = await fetch(`${API_BASE_URL}/${scenarioId}`);
     const data = await handleApiResponse(response);
     return {
         ...data,
@@ -134,9 +136,6 @@ export const saveScenarioData = async ({ scenario, data }) => {
     }
 
     const payload = {
-        ten_id: TENANT_ID,
-        stg_id: STAGE_ID,
-        category_id: "DEV_1000_S_1_1_1",
         name: scenario.name,
         job: scenario.job,
         description: scenario.description || '',
@@ -145,7 +144,7 @@ export const saveScenarioData = async ({ scenario, data }) => {
         start_node_id: data.startNodeId
     };
 
-    const response = await fetch(`${API_BASE_URL}/${TENANT_ID}/${STAGE_ID}/${scenario.id}`, {
+    const response = await fetch(`${API_BASE_URL}/${scenario.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -161,10 +160,10 @@ export const saveScenarioData = async ({ scenario, data }) => {
 };
 
 export const updateScenarioLastUsed = async ({ scenarioId }) => {
-  const response = await fetch(`${API_BASE_URL}/${TENANT_ID}/${STAGE_ID}/${scenarioId}`, {
+  const response = await fetch(`${API_BASE_URL}/${scenarioId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ last_used_at: new Date().toISOString() }), 
+    body: JSON.stringify({ last_used_at: new Date().toISOString() }),
   });
   const data = await handleApiResponse(response);
   return { 
@@ -176,16 +175,16 @@ export const updateScenarioLastUsed = async ({ scenarioId }) => {
   };
 };
 
-// --- 💡 [구현] 템플릿 (API/Form) 관련 함수 (Mock API 명세 반영) ---
+// --- 템플릿 (API/Form) 관련 함수 ---
 
 // API Templates
 export const fetchApiTemplates = async () => {
-    const response = await fetch(`${TEMPLATE_BASE_URL}/api/${TENANT_ID}`);
+    const response = await fetch(`${TEMPLATE_BASE_URL}/api`);
     return handleApiResponse(response);
 };
 
 export const saveApiTemplate = async (templateData) => {
-    const response = await fetch(`${TEMPLATE_BASE_URL}/api/${TENANT_ID}`, {
+    const response = await fetch(`${TEMPLATE_BASE_URL}/api`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(templateData),
@@ -194,7 +193,7 @@ export const saveApiTemplate = async (templateData) => {
 };
 
 export const deleteApiTemplate = async (templateId) => {
-    const response = await fetch(`${TEMPLATE_BASE_URL}/api/${TENANT_ID}/${templateId}`, {
+    const response = await fetch(`${TEMPLATE_BASE_URL}/api/${templateId}`, {
         method: 'DELETE',
     });
     return handleApiResponse(response);
@@ -202,12 +201,12 @@ export const deleteApiTemplate = async (templateId) => {
 
 // Form Templates
 export const fetchFormTemplates = async () => {
-    const response = await fetch(`${TEMPLATE_BASE_URL}/form/${TENANT_ID}`);
+    const response = await fetch(`${TEMPLATE_BASE_URL}/form`);
     return handleApiResponse(response);
 };
 
 export const saveFormTemplate = async (templateData) => {
-    const response = await fetch(`${TEMPLATE_BASE_URL}/form/${TENANT_ID}`, {
+    const response = await fetch(`${TEMPLATE_BASE_URL}/form`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(templateData),
@@ -216,58 +215,63 @@ export const saveFormTemplate = async (templateData) => {
 };
 
 export const deleteFormTemplate = async (templateId) => {
-    const response = await fetch(`${TEMPLATE_BASE_URL}/form/${TENANT_ID}/${templateId}`, {
+    const response = await fetch(`${TEMPLATE_BASE_URL}/form/${templateId}`, {
         method: 'DELETE',
     });
     return handleApiResponse(response);
 };
 
-// --- 💡 [구현] 노드 표시 설정 (Settings) 관련 함수 (Mock API 명세 반영) ---
+// --- 노드 표시 설정 (Settings) 관련 함수 (Mock 사용) ---
 
 export const saveNodeVisibility = async (visibleNodeTypes) => {
-    const response = await fetch(`${SETTINGS_BASE_URL}/${TENANT_ID}/node_visibility`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visibleNodeTypes }),
-    });
-    return handleApiResponse(response);
+    await delay();
+    console.log('[Mock API] Saved node visibility');
+    return { visibleNodeTypes };
 };
 
 export const fetchNodeVisibility = async () => {
-    const response = await fetch(`${SETTINGS_BASE_URL}/${TENANT_ID}/node_visibility`);
-    // 404 등 실패 시 null을 반환하여 Store에서 기본값을 사용하도록 함
-    if (!response.ok) return null;
-    return handleApiResponse(response);
+    await delay();
+    // 모든 노드 타입을 true로 반환
+    const allNodeTypes = {
+        message: true,
+        apiNode: true,
+        formNode: true,
+        branchNode: true,
+        delayNode: true,
+        setSlotNode: true,
+        slotFillingNode: true,
+        fixedMenuNode: true,
+        linkNode: true,
+        iframeNode: true,
+        toastNode: true,
+        llmNode: true,
+    };
+    console.log('[Mock API] Fetching node visibility');
+    return { visibleNodeTypes: allNodeTypes };
 };
 
-// Node Colors
+// Node Colors - Mock 사용
 export const fetchNodeColors = async () => {
-    const response = await fetch(`${SETTINGS_BASE_URL}/${TENANT_ID}/node_colors`);
-    if (!response.ok) return null;
-    return handleApiResponse(response);
+    await delay();
+    console.log('[Mock API] Fetching node colors');
+    return MOCK_NODE_COLORS;
 };
 
 export const saveNodeColors = async (colors) => {
-    const response = await fetch(`${SETTINGS_BASE_URL}/${TENANT_ID}/node_colors`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(colors),
-    });
-    return handleApiResponse(response);
+    await delay();
+    console.log('[Mock API] Saved node colors');
+    return colors;
 };
 
-// Node Text Colors
+// Node Text Colors - Mock 사용
 export const fetchNodeTextColors = async () => {
-    const response = await fetch(`${SETTINGS_BASE_URL}/${TENANT_ID}/node_text_colors`);
-    if (!response.ok) return null;
-    return handleApiResponse(response);
+    await delay();
+    console.log('[Mock API] Fetching node text colors');
+    return MOCK_NODE_TEXT_COLORS;
 };
 
 export const saveNodeTextColors = async (textColors) => {
-    const response = await fetch(`${SETTINGS_BASE_URL}/${TENANT_ID}/node_text_colors`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(textColors),
-    });
-    return handleApiResponse(response);
+    await delay();
+    console.log('[Mock API] Saved node text colors');
+    return textColors;
 };
