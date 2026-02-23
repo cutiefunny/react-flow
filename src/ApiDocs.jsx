@@ -39,7 +39,7 @@ function ApiDocs() {
         <p>
           FastAPI 백엔드 서버 기반 챗봇 시나리오, 템플릿, 설정 관리 API 명세입니다.
           <br />
-          Base URL: <code>/api/v1/chat</code> (Frontend Proxy: <code>/api/proxy/chat</code>)
+          Base URL: <code>/api/v1/builder</code> (Frontend Proxy: <code>/api/proxy/chat</code>)
         </p>
       </header>
 

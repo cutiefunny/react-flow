@@ -6,7 +6,7 @@ import {
   delay,
 } from './mockData';
 
-const BASE_URL = 'http://202.20.84.65:8083/api/v1';
+const BASE_URL = 'http://202.20.84.65:8083/api/v1/builder';
 
 // 리소스별 Base URL 정의
 const API_BASE_URL = `${BASE_URL}/scenarios`;
@@ -32,6 +32,7 @@ const handleApiResponse = async (response) => {
 };
 
 export const fetchScenarios = async () => {
+    // GET 요청 시 슬래시 유무 확인이 필요할 수 있습니다.
     const response = await fetch(`${API_BASE_URL}`);
     const data = await handleApiResponse(response);
     const scenarios = data?.scenarios || (Array.isArray(data) ? data : []);
@@ -49,6 +50,8 @@ export const fetchScenarios = async () => {
 };
 
 export const createScenario = async ({ newScenarioName, job, description }) => {
+    // 💡 405 에러 해결을 위해 엔드포인트 뒤에 / 를 붙이거나 백엔드 라우팅 설정을 확인해야 합니다.
+    // 많은 경우 FastAPI는 /scenarios/ (POST) 처럼 마지막 슬래시를 명시적으로 요구할 수 있습니다.
     const response = await fetch(`${API_BASE_URL}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,7 +75,7 @@ export const createScenario = async ({ newScenarioName, job, description }) => {
 };
 
 export const cloneScenario = async ({ scenarioToClone, newName }) => {
-  const response = await fetch(`${API_BASE_URL}`, {
+  const response = await fetch(`${API_BASE_URL}/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

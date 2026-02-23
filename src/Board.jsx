@@ -28,7 +28,7 @@ function Board({ user }) {
         id: '1',
         author: 'John Doe',
         authorId: 'user1',
-        authorPhotoURL: 'https://via.placeholder.com/40',
+        authorPhotoURL: 'https://cattlefield.net/cat_jump.png',
         text: 'Welcome to the Board! This is a shared space for collaboration.',
         timestamp: new Date(),
         fileUrl: '',

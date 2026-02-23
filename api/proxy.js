@@ -1,5 +1,5 @@
 // 호출하려는 HTTP API 서버의 '기본' 주소만 남깁니다.
-const API_BASE_URL = 'http://202.20.84.65:8083/api/v1';
+const API_BASE_URL = 'http://202.20.84.65:8083/api/v1/builder';
 
 export default async function handler(req, res) {
   try {

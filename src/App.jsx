@@ -36,7 +36,7 @@ function App() {
     const defaultUser = {
       email: 'dev@example.com',
       displayName: 'Developer',
-      photoURL: 'https://via.placeholder.com/40'
+      photoURL: 'https://cattlefield.net/cat_jump.png'
     };
     setUser(defaultUser);
 
@@ -50,7 +50,7 @@ function App() {
     const defaultUser = {
       email: 'dev@example.com',
       displayName: 'Developer',
-      photoURL: 'https://via.placeholder.com/40'
+      photoURL: 'https://cattlefield.net/cat_jump.png'
     };
     setUser(defaultUser);
   };
@@ -61,7 +61,7 @@ function App() {
 
   const handleScenarioSelect = async (scenario) => {
     try {
-      const updatedScenarioData = await backendService.updateScenarioLastUsed(backend, { scenarioId: scenario.id });
+      // const updatedScenarioData = await backendService.updateScenarioLastUsed(backend, { scenarioId: scenario.id });
       
       const newLastUsedAt = updatedScenarioData.lastUsedAt || (updatedScenarioData.last_used_at ? new Date(updatedScenarioData.last_used_at) : new Date());
 
