@@ -165,11 +165,9 @@ function App() {
             <button onClick={() => handleViewChange('api')} className={view === 'api' ? 'active' : ''}>
               API Docs
             </button>
-            {isAdmin && (
-              <button onClick={() => handleViewChange('admin')} className={view === 'admin' ? 'active' : ''}>
-                Admin
-              </button>
-            )}
+            <button onClick={() => handleViewChange('admin')} className={view === 'admin' ? 'active' : ''}>
+              Admin
+            </button>
           </nav>
           <div className="user-profile">
             {user ? (
@@ -210,8 +208,7 @@ function App() {
           </div>
           
           <div className={`view-container ${view !== 'admin' ? 'hidden' : ''}`}>
-              {/* 💡 [수정] backend prop 전달 */}
-              {isAdmin ? <Admin backend={backend} /> : <div style={{padding: '20px'}}>Access Denied.</div>}
+              <Admin backend={backend} />
           </div>
         </main>
         <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
