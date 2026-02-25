@@ -47,14 +47,11 @@ const defaultVisibleNodeTypes = [
   'message',
   'form',
   'branch',
-  'slotfilling',
   'api',
   'setSlot',
   'delay',
-  'fixedmenu',
   'link',
   'iframe',
-  'scenario',
 ];
 
 
