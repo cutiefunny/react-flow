@@ -1,4 +1,9 @@
 // src/simulatorUtils.js
+import * as scenarioCore from '@clt-chatbot/scenario-core';
+const { ChatbotEngine } = scenarioCore;
+
+// Dummy scenario data for engine initialization (Utility only)
+const engine = new ChatbotEngine({ nodes: [], edges: [], version: '1.0' });
 
 // ========================================================================
 // == Chatbot Scenario Utility Functions Reference ==
@@ -22,26 +27,11 @@ export const generateUniqueId = () => `${Date.now()}-${Math.random().toString(36
  * @returns {string} 슬롯 값이 치환된 문자열
  */
 export const interpolateMessage = (message, slots) => {
-    const messageStr = String(message || '');
-    if (!messageStr) return '';
-
-    // {{slotName}} 형식의 구문을 찾아 해당 슬롯 값으로 치환
-    return messageStr.replace(/{{([^}]+)}}/g, (match, key) => {
-        // getNestedValue를 사용하여 슬롯 내부의 객체 값에도 접근 가능하도록 수정
-        const value = getNestedValue(slots, key);
-        // 값이 객체나 배열인 경우 JSON 문자열로 변환하여 반환
-        if (typeof value === 'object' && value !== null) {
-            return JSON.stringify(value);
-        }
-        // 값이 undefined가 아니면 해당 값으로, 아니면 원래 문자열({{slotName}}) 유지
-        return value !== undefined ? value : match;
-    });
+    return engine.interpolateMessage(message, slots);
 };
 
 export const getNestedValue = (obj, path) => {
-    if (!path) return undefined;
-    const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
-    return normalizedPath.split('.').reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined), obj);
+    return engine.getDeepValue(obj, path);
 };
 
 // 💡 [추가] 객체의 깊은 경로에 값을 설정하는 setNestedValue 함수
@@ -123,48 +113,8 @@ export const validateInput = (value, validation) => {
 
 export const evaluateCondition = (slotValue, operator, condition, slots) => {
   let conditionValue = condition.value;
-// ... (evaluateCondition 로직 생략)
-  // valueType이 'slot'이면, slots 객체에서 값을 가져옴
   if (condition.valueType === 'slot') {
     conditionValue = getNestedValue(slots, condition.value);
   }
-
-  const lowerCaseConditionValue = String(conditionValue).toLowerCase();
-  if (lowerCaseConditionValue === 'true' || lowerCaseConditionValue === 'false') {
-    const boolConditionValue = lowerCaseConditionValue === 'true';
-    const boolSlotValue = String(slotValue).toLowerCase() === 'true';
-
-    switch (operator) {
-      case '==':
-        return boolSlotValue === boolConditionValue;
-      case '!=':
-        return boolSlotValue !== boolConditionValue;
-      default:
-        return false;
-    }
-  }
-
-  const numSlotValue = parseFloat(slotValue);
-  const numConditionValue = parseFloat(conditionValue);
-
-  switch (operator) {
-    case '==':
-      return slotValue == conditionValue;
-    case '!=':
-      return slotValue != conditionValue;
-    case '>':
-      return !isNaN(numSlotValue) && !isNaN(numConditionValue) && numSlotValue > numConditionValue;
-    case '<':
-      return !isNaN(numSlotValue) && !isNaN(numConditionValue) && numSlotValue < numConditionValue;
-    case '>=':
-      return !isNaN(numSlotValue) && !isNaN(numConditionValue) && numSlotValue >= numConditionValue;
-    case '<=':
-      return !isNaN(numSlotValue) && !isNaN(numConditionValue) && numSlotValue <= numConditionValue;
-    case 'contains':
-      return slotValue && String(slotValue).includes(conditionValue);
-    case '!contains':
-      return !slotValue || !String(slotValue).includes(conditionValue);
-    default:
-      return false;
-  }
+  return engine.evaluateCondition(slotValue, operator, conditionValue);
 };

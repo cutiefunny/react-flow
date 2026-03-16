@@ -4,6 +4,14 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: ['@clt-chatbot/scenario-core'],
+  },
+  build: {
+    commonjsOptions: {
+      include: [/@clt-chatbot\/scenario-core/, /node_modules/],
+    },
+  },
   server: {
     proxy: {
       // '/api/proxy'로 시작하는 모든 요청을 target으로 전달합니다.

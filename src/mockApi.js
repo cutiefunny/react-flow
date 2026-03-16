@@ -30,7 +30,6 @@ export const fetchScenarios = async () => {
   return mockStore.scenarios.map((scenario) => ({
     ...scenario,
     updatedAt: scenario.updated_at,
-    lastUsedAt: scenario.last_used_at,
   }));
 };
 
@@ -53,7 +52,6 @@ export const createScenario = async ({ newScenarioName, job, description }) => {
     ...newScenario,
     startNodeId: newScenario.start_node_id,
     updatedAt: newScenario.updated_at,
-    lastUsedAt: newScenario.last_used_at,
   };
 };
 
@@ -109,7 +107,6 @@ export const cloneScenario = async ({ scenarioToClone, newName }) => {
     ...clonedScenario,
     startNodeId: clonedScenario.start_node_id,
     updatedAt: clonedScenario.updated_at,
-    lastUsedAt: clonedScenario.last_used_at,
   };
 };
 
@@ -160,22 +157,7 @@ export const saveScenarioData = async ({ scenario, data }) => {
   return mockStore.scenarios[scenarioIndex];
 };
 
-export const updateScenarioLastUsed = async ({ scenarioId }) => {
-  await delay();
-  const scenario = mockStore.scenarios.find((s) => s.id === scenarioId);
-  if (!scenario) {
-    throw new Error('Scenario not found');
-  }
 
-  scenario.last_used_at = new Date().toISOString();
-  console.log('[Mock API] Updated last used:', scenarioId);
-  return {
-    ...scenario,
-    startNodeId: scenario.start_node_id,
-    updatedAt: scenario.updated_at,
-    lastUsedAt: scenario.last_used_at,
-  };
-};
 
 // API Templates
 export const fetchApiTemplates = async () => {

@@ -137,7 +137,7 @@ const formatTimeAgo = (date) => {
 
 function ScenarioList({ backend, onSelect, onAddScenario, onEditScenario, scenarios, setScenarios }) {
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState('updatedAt'); // 'updatedAt' 또는 'lastUsedAt'
+  const [sortBy, setSortBy] = useState('updatedAt');
   const { showAlert, showConfirm } = useAlert();
 
   useEffect(() => {
@@ -150,8 +150,7 @@ function ScenarioList({ backend, onSelect, onAddScenario, onEditScenario, scenar
           ...scenario,
           job: scenario.job || 'Process',
           description: scenario.description || '',
-          updatedAt: scenario.updatedAt || null,
-          lastUsedAt: scenario.lastUsedAt || null 
+          updatedAt: scenario.updatedAt || null
         }));
 
         setScenarios(scenarioList);
@@ -208,7 +207,7 @@ function ScenarioList({ backend, onSelect, onAddScenario, onEditScenario, scenar
         });
         setScenarios(prev => [
           ...prev, 
-          { ...newScenario, description: newScenario.description || '', lastUsedAt: null }
+          { ...newScenario, description: newScenario.description || '' }
         ]);
         showAlert(`Scenario '${scenarioToClone.name}' has been cloned to '${trimmedName}'.`);
       } catch (error) {
@@ -248,16 +247,11 @@ function ScenarioList({ backend, onSelect, onAddScenario, onEditScenario, scenar
           onChange={(e) => setSortBy(e.target.value)}
         >
           <option value="updatedAt">최근 수정 순</option>
-          <option value="lastUsedAt">최근 호출 순</option>
         </select>
       </div>
 
       <ul style={styles.list}>
         {sortedScenarios.map(scenario => {
-          const lastUsedAtDate = scenario.lastUsedAt
-            ? (scenario.lastUsedAt.toDate ? scenario.lastUsedAt.toDate() : new Date(scenario.lastUsedAt))
-            : null;
-
           return (
             <li key={scenario.id} style={styles.listItem}>
               <div
@@ -274,14 +268,6 @@ function ScenarioList({ backend, onSelect, onAddScenario, onEditScenario, scenar
               >
                 <div style={styles.scenarioHeader}>
                   <span style={styles.scenarioName} title={scenario.name}>{scenario.name}</span>
-                  
-                  {/* --- 👇 [수정] formatTimeAgo 함수 사용 --- */}
-                  {lastUsedAtDate && !isNaN(lastUsedAtDate) && (
-                    <span style={styles.scenarioTimestamp}>
-                      (Used: {formatTimeAgo(lastUsedAtDate)})
-                    </span>
-                  )}
-                  {/* --- 👆 [수정 끝] --- */}
                 </div>
               </div>
               <div style={styles.buttonGroup}>

@@ -61,22 +61,9 @@ function App() {
 
   const handleScenarioSelect = async (scenario) => {
     try {
-      // const updatedScenarioData = await backendService.updateScenarioLastUsed(backend, { scenarioId: scenario.id });
-      
-      const newLastUsedAt = updatedScenarioData.lastUsedAt || (updatedScenarioData.last_used_at ? new Date(updatedScenarioData.last_used_at) : new Date());
-
-      setScenarios(prevScenarios => 
-        prevScenarios.map(s => 
-          s.id === scenario.id 
-          ? { ...s, lastUsedAt: newLastUsedAt } 
-          : s
-        )
-      );
-      
-      setSelectedScenario({ ...scenario, lastUsedAt: newLastUsedAt });
-      
+      setSelectedScenario(scenario);
     } catch (error) {
-      console.error("Failed to update last used time:", error);
+      console.error("Error selecting scenario:", error);
       setSelectedScenario(scenario);
     } finally {
       setView('flow');
@@ -110,8 +97,8 @@ function App() {
         }
         const newScenario = await backendService.createScenario(backend, { newScenarioName: name, job, description });
          
-        setScenarios(prev => [...prev, { ...newScenario, lastUsedAt: null }]); 
-        setSelectedScenario({ ...newScenario, lastUsedAt: null });
+        setScenarios(prev => [...prev, newScenario]); 
+        setSelectedScenario(newScenario);
         
         setView('flow');
         alert(`Scenario '${newScenario.name}' has been created.`);

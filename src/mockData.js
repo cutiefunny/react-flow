@@ -36,7 +36,6 @@ export const MOCK_SCENARIOS = [
     start_node_id: 'start-001',
     created_at: new Date('2024-01-15').toISOString(),
     updated_at: new Date('2024-01-20').toISOString(),
-    last_used_at: new Date('2024-01-25').toISOString(),
   },
   {
     id: 'scenario-002',
@@ -71,7 +70,6 @@ export const MOCK_SCENARIOS = [
     start_node_id: 'start-002',
     created_at: new Date('2024-02-01').toISOString(),
     updated_at: new Date('2024-02-05').toISOString(),
-    last_used_at: new Date('2024-02-08').toISOString(),
   },
   {
     id: 'scenario-003',
@@ -84,7 +82,6 @@ export const MOCK_SCENARIOS = [
     start_node_id: null,
     created_at: new Date('2024-02-10').toISOString(),
     updated_at: new Date('2024-02-10').toISOString(),
-    last_used_at: null,
   },
 ];
 

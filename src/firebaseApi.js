@@ -136,18 +136,7 @@ export const saveScenarioData = async ({ scenario, data }) => {
   await setDoc(scenarioDocRef, saveData, { merge: true });
 };
 
-export const updateScenarioLastUsed = async ({ scenarioId }) => {
-  const docRef = doc(db, 'scenarios', scenarioId);
-  await updateDoc(docRef, {
-    lastUsedAt: serverTimestamp()
-  });
-  const updatedDocSnap = await getDoc(docRef);
-  if (updatedDocSnap.exists()) {
-    const data = updatedDocSnap.data();
-    return { id: updatedDocSnap.id, ...data };
-  }
-  return null;
-};
+
 
 
 // ... (API/Form 템플릿 함수들) ...

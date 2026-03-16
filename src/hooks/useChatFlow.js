@@ -11,6 +11,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import useStore from '../store';
 import { interpolateMessage, getNestedValue, evaluateCondition, generateUniqueId } from '../simulatorUtils';
 import * as nodeExecutor from '../nodeExecutors'; // 💡 [추가]
+import * as scenarioCore from '@clt-chatbot/scenario-core';
+const { ChatbotEngine } = scenarioCore;
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -38,6 +40,12 @@ export const useChatFlow = (nodes, edges) => {
   const [fixedMenu, setFixedMenu] = useState(null);
   const [isStarted, setIsStarted] = useState(false);
 
+  const engine = useRef(new ChatbotEngine({ nodes, edges, version: '1.0' }));
+  
+  useEffect(() => {
+    engine.current = new ChatbotEngine({ nodes, edges, version: '1.0' });
+  }, [nodes, edges]);
+
   const { slots, setSlots, anchorNodeId, startNodeId } = useStore();
   const currentNode = nodes.find(n => n.id === currentId);
 
@@ -45,85 +53,34 @@ export const useChatFlow = (nodes, edges) => {
 
   // --- 👇 [수정] activeChainId 인자 추가 ---
   const proceedToNextNode = useCallback((sourceHandleId, sourceNodeId, updatedSlots, activeChainId = null) => {
-    // ... (proceedToNextNode 로직 - 변경 없음) ...
     if (sourceNodeId === anchorNodeId) {
         setCurrentId(null);
         return;
     }
     if (!sourceNodeId) return;
-    const sourceNode = nodes.find(n => n.id === sourceNodeId);
-    let nextEdge;
-    // LLM condition check
-    if (sourceNode && sourceNode.type === 'llm' && sourceNode.data.conditions?.length > 0) {
-        const llmOutput = updatedSlots[sourceNode.data.outputVar] || '';
-        const matchedCondition = sourceNode.data.conditions.find(cond =>
-            llmOutput.toLowerCase().includes(cond.keyword.toLowerCase())
-        );
-        if (matchedCondition) {
-            nextEdge = edges.find(edge => edge.source === sourceNodeId && edge.sourceHandle === matchedCondition.id);
-        }
-    }
-    // Branch condition check
-    if (sourceNode && sourceNode.type === 'branch' && sourceNode.data.evaluationType === 'CONDITION') {
-        const conditions = sourceNode.data.conditions || [];
-        for (const condition of conditions) {
-            const slotValue = getNestedValue(updatedSlots, condition.slot);
-            if (evaluateCondition(slotValue, condition.operator, condition, updatedSlots)) {
-                const matchingReply = sourceNode.data.replies[conditions.indexOf(condition)];
-                const handleId = matchingReply?.value;
-                if(handleId) {
-                  nextEdge = edges.find(edge => edge.source === sourceNodeId && edge.sourceHandle === handleId);
-                  if (nextEdge) break;
-                }
-            }
-        }
-         if (!nextEdge) { // Check for default edge if no condition matched
-            nextEdge = edges.find(edge => edge.source === sourceNodeId && edge.sourceHandle === 'default');
-         }
-    }
-    // Find next edge based on handle or default
-    if (!nextEdge) {
-        if (sourceHandleId) {
-            nextEdge = edges.find(edge => edge.source === sourceNodeId && edge.sourceHandle === sourceHandleId);
-        } else {
-            // Prefer default handle first, then handle without ID
-            nextEdge = edges.find(edge => edge.source === sourceNodeId && edge.sourceHandle === 'default') ||
-                       edges.find(edge => edge.source === sourceNodeId && !edge.sourceHandle);
-        }
-    }
-    // Process the next edge
-    if (nextEdge) {
-      const nextNode = nodes.find(node => node.id === nextEdge.target);
-      if (nextNode) {
-        setCurrentId(nextNode.id);
-        // Use the ref to call the latest addBotMessage asynchronously
-        if (addBotMessageRef.current) {
-             addBotMessageRef.current(nextNode.id, updatedSlots, activeChainId);
-        }
-      } else {
-         console.warn(`Next node with id ${nextEdge.target} not found.`);
-         setCurrentId(null); // Stop flow if next node doesn't exist
-      }
-    } else {
-      // Handle cases where there's no outgoing edge (e.g., end of flow, node inside a group)
-      const sourceNode = nodes.find(n => n.id === sourceNodeId);
-      // If the node is inside a group, try to find an edge from the parent group node
-      if (sourceNode?.parentNode) {
-         const parentEdge = edges.find(edge => edge.source === sourceNode.parentNode);
-         if (parentEdge) {
-             // Recursively call proceedToNextNode for the parent node
-            // --- 👇 [수정] activeChainId 인자 전달 ---
-             proceedToNextNode(parentEdge.sourceHandle, sourceNode.parentNode, updatedSlots, activeChainId);
-         } else {
-            setCurrentId(null); // Stop flow if parent has no outgoing edge
-         }
-        return; // Important: exit after handling parent node
-      }
-      // Stop flow if it's not an interactive node waiting for input
-      if(sourceNode?.type !== 'fixedmenu' && sourceNode?.type !== 'form' && sourceNode?.type !== 'slotfilling' && !(sourceNode?.type === 'branch' && sourceNode.data.evaluationType === 'BUTTON')) {
-        setTimeout(() => setCurrentId(null), 500); // Use timeout to ensure state updates settle
-      }
-    }
+
+    const nextNode = engine.current.getNextNode(sourceNodeId, sourceHandleId, updatedSlots);
+
+    if (nextNode) {
+      setCurrentId(nextNode.id);
+      if (addBotMessageRef.current) {
+        addBotMessageRef.current(nextNode.id, updatedSlots, activeChainId);
+      }
+    } else {
+      const sourceNode = nodes.find(n => n.id === sourceNodeId);
+      if (sourceNode?.parentNode) {
+        const parentEdge = edges.find(edge => edge.source === sourceNode.parentNode);
+        if (parentEdge) {
+          proceedToNextNode(parentEdge.sourceHandle, sourceNode.parentNode, updatedSlots, activeChainId);
+        } else {
+          setCurrentId(null);
+        }
+        return;
+      }
+      if (!engine.current.isInteractiveNode(sourceNode)) {
+        setTimeout(() => setCurrentId(null), 500);
+      }
+    }
   }, [edges, nodes, anchorNodeId]); // addBotMessageRef 제거
 
   // --- 👇 [수정] activeChainId 인자 추가 ---

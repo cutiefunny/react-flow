@@ -157,26 +157,11 @@ export const saveScenarioData = async ({ scenario, data }) => {
         ...responseData, 
         startNodeId: responseData.start_node_id, 
         description: responseData.description || '', 
-        updatedAt: responseData.updated_at || null, 
-        lastUsedAt: responseData.last_used_at || null 
+        updatedAt: responseData.updated_at || null
     };
 };
 
-export const updateScenarioLastUsed = async ({ scenarioId }) => {
-  const response = await fetch(`${API_BASE_URL}/${scenarioId}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ last_used_at: new Date().toISOString() }),
-  });
-  const data = await handleApiResponse(response);
-  return { 
-      ...data, 
-      startNodeId: data.start_node_id, 
-      description: data.description || '', 
-      updatedAt: data.updated_at || null, 
-      lastUsedAt: data.last_used_at || null 
-  };
-};
+
 
 // --- 템플릿 (API/Form) 관련 함수 ---
 

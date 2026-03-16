@@ -35,7 +35,6 @@ export const deleteScenario = (backend, args) => getService(backend).deleteScena
 export const fetchScenarioData = (backend, args) => getService(backend).fetchScenarioData(args);
 export const saveScenarioData = (backend, args) => getService(backend).saveScenarioData(args);
 export const cloneScenario = (backend, args) => getService(backend).cloneScenario(args);
-export const updateScenarioLastUsed = (backend, args) => getService(backend).updateScenarioLastUsed(args);
 
 // API Templates
 export const fetchApiTemplates = (backend, args) => getService(backend).fetchApiTemplates(args);
