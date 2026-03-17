@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -13,6 +14,12 @@ export default defineConfig({
     },
   },
   server: {
+    fs: {
+      allow: [
+        '.',
+        path.resolve(__dirname, '../scenario-core')
+      ]
+    },
     proxy: {
       // '/api/proxy'로 시작하는 모든 요청을 target으로 전달합니다.
       '/api/proxy': {
