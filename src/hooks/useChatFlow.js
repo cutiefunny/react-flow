@@ -72,7 +72,7 @@ export const useChatFlow = (nodes, edges) => {
         if (!isChaining) activeChainIdRef.current = null;
       },
       onDelay: async (node) => {
-        await new Promise(resolve => setTimeout(resolve, node.data.duration || 500));
+        await new Promise(resolve => setTimeout(resolve, node.data.duration || 1000));
       },
       onApi: async (node, slots) => {
         const loadingId = generateUniqueId();
