@@ -1,10 +1,19 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import fs from 'fs'
+
+const localLibPath = path.resolve(__dirname, '../clt-chatbot/lib/scenario-core');
+const isLocalAvailable = fs.existsSync(localLibPath);
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: isLocalAvailable ? {
+      '@clt-chatbot/scenario-core': localLibPath
+    } : {}
+  },
   optimizeDeps: {
     include: ['@clt-chatbot/scenario-core'],
   },
